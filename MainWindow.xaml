@@ -5,11 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NinjaTraderLauncher"
         mc:Ignorable="d"
-        Title="MainWindow" Height="180" Width="160">
-    <Grid>
-        <RadioButton x:Name="TradingRadioButton" Content="Trading" HorizontalAlignment="Left" Margin="28,19,0,0" VerticalAlignment="Top" Checked="TradingRadioButton_Checked"/>
-        <RadioButton x:Name="CodeWorkButton" Content="Code Work" HorizontalAlignment="Left" Margin="28,54,0,0" VerticalAlignment="Top" Checked="CodeWorkButton_Checked"/>
-        <Button x:Name="LaunchButton" Content="Launch" HorizontalAlignment="Left" Margin="28,94,0,0" VerticalAlignment="Top" Height="30" Width="95" Click="LaunchButton_Click"/>
-
-    </Grid>
+        Title="NT Launcher" Height="150" Width="150" Icon="/NinjaTrader.ico" WindowStyle="ToolWindow" Background="#FFFF4200">
+    <DockPanel>
+        <Menu x:Name="MainMenu" Margin="0,0,0,0" DockPanel.Dock="Top">
+            <MenuItem Header="E_xit" Click="MenuItem_Click"/>
+        </Menu>
+        <Grid Margin="0,0,0,0">
+            <RadioButton x:Name="TradingRadioButton" Content="Trading" HorizontalAlignment="Left" Margin="27,18,0,0" VerticalAlignment="Top" Checked="TradingRadioButton_Checked" RenderTransformOrigin="0.891,1.674"/>
+            <RadioButton x:Name="CodeWorkButton" Content="Code Work" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="CodeWorkButton_Checked" Margin="27,36,0,0"/>
+            <Button x:Name="LaunchButton" Content="Launch" HorizontalAlignment="Left" Margin="18,61,0,0" VerticalAlignment="Top" Height="30" Width="96" Click="LaunchButton_Click"/>
+        </Grid>
+    </DockPanel>
 </Window>

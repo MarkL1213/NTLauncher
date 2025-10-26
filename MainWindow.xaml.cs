@@ -68,5 +68,10 @@ namespace NinjaTraderLauncher
                 MessageBox.Show($"Error setting startup workspace to Trading: {result}");
             }
         }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
     }
 }
