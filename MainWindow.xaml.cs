@@ -40,8 +40,16 @@ namespace NinjaTraderLauncher
 
             InitializeComponent();
 
+            List<StartupWorkspace> validWorkspaces = workspaceFile.DetectWorkspaces();
             string currentWorkspace = workspaceFile.LookupCurrentWorkspace();
 
+
+            //////////////////
+            /// replace this with dynamic radio button creation based on the detected workspaces
+            //////////////////
+            CodeWorkButton.Tag = codeworkWorkspace;
+            TradingRadioButton.Tag = tradingWorkspace;
+                        
             if (currentWorkspace == codeworkWorkspace.WorkspaceName)
             {
                 CodeWorkButton.IsChecked = true;
@@ -50,6 +58,7 @@ namespace NinjaTraderLauncher
             {
                 TradingRadioButton.IsChecked = true;
             }
+            //////////////////
         }
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
@@ -60,23 +69,23 @@ namespace NinjaTraderLauncher
             }
         }
 
-        private void CodeWorkButton_Checked(object sender, RoutedEventArgs e)
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            string result = workspaceFile.SetStartupWorkspace(codeworkWorkspace);
+            RadioButton radioButton = sender as RadioButton;
+            StartupWorkspace workspace = radioButton.Tag as StartupWorkspace;
+            if (workspace == null)
+            {
+                MessageBox.Show("Error: Workspace radio button has no StartupWorkspace tag associated.");
+                return;
+            }
+
+            string result = workspaceFile.SetStartupWorkspace(workspace);
             if (!string.IsNullOrEmpty(result))
             {
-                MessageBox.Show($"Error setting startup workspace to Code Work: {result}");
+                MessageBox.Show($"Error: Setting startup workspace to \"{workspace.WorkspaceName}\" failed: {result}");
             }
         }
 
-        private void TradingRadioButton_Checked(object sender, RoutedEventArgs e)
-        {
-            string result = workspaceFile.SetStartupWorkspace(tradingWorkspace);
-            if (!string.IsNullOrEmpty(result))
-            {
-                MessageBox.Show($"Error setting startup workspace to Trading: {result}");
-            }
-        }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {

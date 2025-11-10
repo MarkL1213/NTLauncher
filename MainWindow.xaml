@@ -11,8 +11,8 @@
             <MenuItem Header="E_xit" Click="MenuItem_Click"/>
         </Menu>
         <Grid Margin="0,0,0,0">
-            <RadioButton x:Name="TradingRadioButton" Content="Trading" HorizontalAlignment="Left" Margin="27,18,0,0" VerticalAlignment="Top" Checked="TradingRadioButton_Checked" RenderTransformOrigin="0.891,1.674"/>
-            <RadioButton x:Name="CodeWorkButton" Content="Code Work" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="CodeWorkButton_Checked" Margin="27,36,0,0"/>
+            <RadioButton x:Name="TradingRadioButton" Content="Trading" HorizontalAlignment="Left" Margin="27,18,0,0" VerticalAlignment="Top" Checked="RadioButton_Checked" RenderTransformOrigin="0.891,1.674"/>
+            <RadioButton x:Name="CodeWorkButton" Content="Code Work" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="RadioButton_Checked" Margin="27,36,0,0"/>
             <Button x:Name="LaunchButton" Content="Launch" HorizontalAlignment="Left" Margin="18,61,0,0" VerticalAlignment="Top" Height="30" Width="96" Click="LaunchButton_Click"/>
         </Grid>
     </DockPanel>

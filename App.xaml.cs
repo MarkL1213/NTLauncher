@@ -13,115 +13,72 @@ namespace NinjaTraderLauncher
     {
         WorkspaceFile _workspaceFile = new WorkspaceFile() { ConfigFileName = "_Workspaces.xml", FilePath = "C:\\Users\\Mark\\Documents\\NinjaTrader 8\\workspaces\\" };
         public WorkspaceFile WorkspaceFile { get { return _workspaceFile; } }
-        
-        void AppStartup (object sender, StartupEventArgs e)
+
+        void AppStartup(object sender, StartupEventArgs e)
         {
-            for (int i = 0; i != e.Args.Length; ++i)
+            CommandLine commandLine = new CommandLine();
+            commandLine.AddPrefixes(new string[] { "/", "-", "--" });
+
+            CommandLineArgument newArgument;
+            newArgument = new CommandLineArgument("Launch", "Workspace name to launch", true);
+            commandLine.AddArgument(newArgument);
+
+            newArgument = new CommandLineArgument("Help", "Display command line help.");
+            newArgument.UsesCharacter = true;
+            newArgument.Character= 'h';
+            commandLine.AddArgument(newArgument);
+
+            if (!commandLine.Parse(e.Args))
             {
-                string[] argValues = e.Args[i].Split('=');
-                string argName = argValues[0];
-                string argValue = string.Empty;
+                MessageBox.Show(commandLine.AllErrors());
+                Shutdown(10);
+                return;
+            }
 
-                if (argName == "/Launch" || argName == "-Launch" || argName == "--Launch")
-                {
-                    if (argValues.Length == 2) { argValue = argValues[1]; }
-                    else
-                    {
-                        int n = 1;
-                        if (i + n >= e.Args.Length)
-                        {
-                            MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                            Shutdown(3);
-                            return;
-                        }
+            if (commandLine.Arguments["Help"].ArgumentFound)
+            {
+                //show command line help
+                Shutdown(0);
+                return;
+            }
 
-                        if (e.Args[i + n] == "=") { n++; }
-
-                        if (i + n >= e.Args.Length)
-                        {
-                            MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                            Shutdown(3);
-                            return;
-
-                        }
-
-                        if (e.Args[i + n].StartsWith('/') || e.Args[i + n].StartsWith('-') || e.Args[i + n].StartsWith("--"))
-                        {
-                            MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                            Shutdown(3);
-                            return;
-                        }
-
-                        argValue = e.Args[i + n];
-                        i += n;
-                    }
-
-                    if (string.IsNullOrEmpty(argValue))
-                    {
-                        MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                        Shutdown(3);
-                        return;
-                    }
-
-                    argValue = argValue.TrimStart();
-                    argValue = argValue.TrimEnd();
-
-                    if (string.IsNullOrEmpty(argValue))
-                    {
-                        MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                        Shutdown(3);
-                        return;
-                    }
-
-                    if (argValue.StartsWith('"') && argValue.EndsWith('"'))
-                    {
-                        argValue = argValue.TrimStart('"');
-                        argValue = argValue.TrimEnd('"');
-                    }
-
-                    if (string.IsNullOrEmpty(argValue))
-                    {
-                        MessageBox.Show("CommandLine argument \"Launch\" requires a values.");
-                        Shutdown(3);
-                        return;
-                    }
-
-                    List<StartupWorkspace> validWorkspaces = _workspaceFile.DetectWorkspaces();
-                    if (validWorkspaces.Find(x => x.WorkspaceName == argValue) == null)
-                    {
-                        MessageBox.Show($"Unable to launch unknown workspace \"{argValue}\"");
-                        Shutdown(5);
-                    }
-
-                    string result = _workspaceFile.SetStartupWorkspace(new StartupWorkspace() { WorkspaceName = argValue });
-                    if (!string.IsNullOrEmpty(result))
-                    {
-                        MessageBox.Show(result);
-                        Shutdown(6);
-                        return;
-                    }
-
-                    if (!_workspaceFile.LaunchNinjaTrader())
-                    {
-                        MessageBox.Show("Failed to launch NinjaTrader application.");
-                        Shutdown(7);
-                        return;
-                    }
-
-                    Shutdown(0);
-                    return;
-                }
-                else
-                {
-                    MessageBox.Show($"CommandLine argument \"{argName}\" unknown.");
-                    Shutdown(4);
-                    return;
-                }
-
+            if (commandLine.Arguments["Launch"].ArgumentFound)
+            {
+                HandleLaunchArgument(commandLine.Arguments["Launch"]);
+                return;
             }
 
             MainWindow mainWindow = new MainWindow();
             mainWindow.Show();
+        }
+
+        private bool HandleLaunchArgument(CommandLineArgument launch)
+        {
+            List<StartupWorkspace> validWorkspaces = _workspaceFile.DetectWorkspaces();
+            if (validWorkspaces.Find(x => x.WorkspaceName == launch.Value) == null)
+            {
+                MessageBox.Show($"Unable to launch unknown workspace \"{launch.Value}\"");
+                Shutdown(5);
+                return false;
+            }
+
+            string result = _workspaceFile.SetStartupWorkspace(new StartupWorkspace() { WorkspaceName = launch.Value });
+            if (!string.IsNullOrEmpty(result))
+            {
+                MessageBox.Show(result);
+                Shutdown(6);
+                return false;
+            }
+
+            if (!_workspaceFile.LaunchNinjaTrader())
+            {
+                MessageBox.Show("Failed to launch NinjaTrader application.");
+                Shutdown(7);
+                return false;
+            }
+
+            Shutdown(0);
+            return true;
         }
     }
 
