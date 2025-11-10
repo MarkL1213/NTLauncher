@@ -16,16 +16,32 @@ namespace NinjaTraderLauncher
     /// </summary>
     public partial class MainWindow : Window
     {
-        WorkspaceFile workspaceFile = new WorkspaceFile() { FilePath= "C:\\Users\\Mark\\Documents\\NinjaTrader 8\\workspaces\\_Workspaces.xml" };
         StartupWorkspace codeworkWorkspace = new StartupWorkspace() { WorkspaceName = "Code Work" };
         StartupWorkspace tradingWorkspace = new StartupWorkspace() { WorkspaceName = "Trading" };
-        string NinjaTraderExecutable = "C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe";
+
+        WorkspaceFile workspaceFile = null;
 
         public MainWindow()
         {
+            App app = (App)Application.Current;
+            if(app == null)
+            {
+                MessageBox.Show("Application is null");
+                Application.Current.Shutdown(1);
+                return;
+            }
+            workspaceFile = app.WorkspaceFile;
+            if (workspaceFile == null)
+            {
+                MessageBox.Show("Workspace file is null");
+                Application.Current.Shutdown(2);
+                return;
+            }
+
             InitializeComponent();
 
             string currentWorkspace = workspaceFile.LookupCurrentWorkspace();
+
             if (currentWorkspace == codeworkWorkspace.WorkspaceName)
             {
                 CodeWorkButton.IsChecked = true;
@@ -38,14 +54,7 @@ namespace NinjaTraderLauncher
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            bool started = false;
-            using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
-            {
-                pProcess.StartInfo.FileName = NinjaTraderExecutable;
-                pProcess.StartInfo.UseShellExecute = false;
-                started = pProcess.Start();
-            }
-            if (started)
+            if (workspaceFile.LaunchNinjaTrader())
             {
                 Application.Current.Shutdown();
             }

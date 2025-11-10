@@ -14,18 +14,33 @@ namespace NinjaTraderLauncher
 
     public class WorkspaceFile
     {
+        public string ConfigFileName { get; set; }
         public string FilePath { get; set; }
+
+        public const string NinjaTraderExecutable = "C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe";
+
+        public bool LaunchNinjaTrader()
+        {
+            using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
+            {
+                pProcess.StartInfo.FileName = NinjaTraderExecutable;
+                pProcess.StartInfo.UseShellExecute = false;
+                return pProcess.Start();
+            }
+        }
 
         public string SetStartupWorkspace(StartupWorkspace workspace)
         {
-            if (!File.Exists(FilePath))
+            string fullPath = Path.Combine(FilePath, ConfigFileName);
+
+            if (!File.Exists(fullPath))
             {
                 return "File does not exist";
             }
 
             try
             {
-                string[] lines = File.ReadAllLines(FilePath);
+                string[] lines = File.ReadAllLines(fullPath);
                 int lineIndex = -1;
                 for (int i = 0; i < lines.Length; i++)
                 {
@@ -41,7 +56,7 @@ namespace NinjaTraderLauncher
                 }
                 lines[lineIndex] = $"  <ActiveWorkspace>{workspace.WorkspaceName}</ActiveWorkspace>";
 
-                File.WriteAllLines(FilePath, lines);
+                File.WriteAllLines(fullPath, lines);
             }
             catch (Exception ex)
             {
@@ -51,15 +66,43 @@ namespace NinjaTraderLauncher
             return string.Empty;
         }
 
+        public List<StartupWorkspace> DetectWorkspaces()
+        {
+            List<StartupWorkspace> workspaces = new List<StartupWorkspace>();
+            if (!Directory.Exists(FilePath))
+            {
+                return workspaces;
+            }
+            try
+            {
+                Directory.EnumerateFiles(FilePath, "*.xml").ToList().ForEach(file =>
+                {
+                    string fileName = Path.GetFileName(file);
+                    if (fileName != ConfigFileName)
+                    {
+                        string fileNameNoExtension = Path.GetFileNameWithoutExtension(file);
+                        workspaces.Add(new StartupWorkspace() { WorkspaceName = fileNameNoExtension });
+                    }
+                });
+            }
+            catch
+            {
+                return workspaces;
+            }
+            return workspaces;
+        }
+
         public string LookupCurrentWorkspace()
         {
-            if (!File.Exists(FilePath))
+            string fullPath = Path.Combine(FilePath, ConfigFileName);
+
+            if (!File.Exists(fullPath))
             {
                 return string.Empty;
             }
             try
             {
-                string[] lines = File.ReadAllLines(FilePath);
+                string[] lines = File.ReadAllLines(fullPath);
                 foreach (string line in lines)
                 {
                     if (line.StartsWith("  <ActiveWorkspace>", StringComparison.CurrentCulture))
