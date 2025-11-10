@@ -42,23 +42,25 @@ namespace NinjaTraderLauncher
 
             List<StartupWorkspace> validWorkspaces = workspaceFile.DetectWorkspaces();
             string currentWorkspace = workspaceFile.LookupCurrentWorkspace();
-
-
-            //////////////////
-            /// replace this with dynamic radio button creation based on the detected workspaces
-            //////////////////
-            CodeWorkButton.Tag = codeworkWorkspace;
-            TradingRadioButton.Tag = tradingWorkspace;
-                        
-            if (currentWorkspace == codeworkWorkspace.WorkspaceName)
+            int n = 0;
+            foreach (StartupWorkspace workspace in validWorkspaces)
             {
-                CodeWorkButton.IsChecked = true;
+                RadioButton rb = new RadioButton();
+                rb.Name = workspace.WorkspaceName.Replace(' ', '_') + "_RadioButton";
+                rb.Content = workspace.WorkspaceName;
+                rb.Tag = workspace;
+                if(currentWorkspace ==  workspace.WorkspaceName) rb.IsChecked = true;
+                rb.Checked += RadioButton_Checked;
+                Thickness t = new Thickness();
+                t.Left = 27;
+                rb.Margin = t;
+                RowDefinition rd = new RowDefinition();
+                rd.Height = GridLength.Auto;
+                MainWindowControlGrid.RowDefinitions.Add(rd);
+
+                MainWindowControlGrid.Children.Add(rb);
+                Grid.SetRow(rb, n++);
             }
-            else if (currentWorkspace == tradingWorkspace.WorkspaceName)
-            {
-                TradingRadioButton.IsChecked = true;
-            }
-            //////////////////
         }
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
