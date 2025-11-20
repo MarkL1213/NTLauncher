@@ -4,9 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Net.Http.Headers;
 
 namespace NinjaTraderLauncher
 {
+    public class LauncherOptions
+    {
+        public const string NinjaTraderExecutable = "C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe";
+        public const string NinjaTraderDocumentsDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8";
+    }
+
     public class StartupWorkspace
     {
         public string WorkspaceName { get; set; }
@@ -17,13 +24,11 @@ namespace NinjaTraderLauncher
         public string ConfigFileName { get; set; }
         public string FilePath { get; set; }
 
-        public const string NinjaTraderExecutable = "C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe";
-
         public bool LaunchNinjaTrader()
         {
             using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
             {
-                pProcess.StartInfo.FileName = NinjaTraderExecutable;
+                pProcess.StartInfo.FileName = LauncherOptions.NinjaTraderExecutable;
                 pProcess.StartInfo.UseShellExecute = false;
                 return pProcess.Start();
             }
@@ -122,5 +127,170 @@ namespace NinjaTraderLauncher
             }
             return string.Empty;
         }
-    }   
+    }
+
+    public class NinjaTraderCleaner
+    {
+        public NinjaTraderCleaner() { }
+        public NinjaTraderCleaner(string installDirectory) { InstallDirectory = installDirectory; }
+
+        public enum DataInterval { Tick, Minute, Day, Replay, Cache, All };
+
+        public string InstallDirectory { set; get; }
+
+        public string Error { get; private set; }
+
+        public bool VerifyInstallDirectory()
+        {
+            Error = string.Empty;
+            if (string.IsNullOrEmpty(InstallDirectory))
+            {
+                Error = "Install directory is not set.";
+                return false;
+            }
+            if (!Directory.Exists(InstallDirectory))
+            {
+                Error = $"Install directory '{InstallDirectory}' does not exist.";
+                return false;
+            }
+            return true;
+        }
+
+        private bool DeleteAllRecursive(string directoryToClean)
+        {
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(directoryToClean);
+
+                foreach (FileInfo file in di.EnumerateFiles())
+                {
+                    file.Delete();
+                }
+                foreach (DirectoryInfo dir in di.EnumerateDirectories())
+                {
+                    dir.Delete(true);
+                }
+            }
+            catch(Exception e)
+            {
+                Error = e.Message;
+                return false;
+            }
+            return true;
+        }
+
+        public bool CleanAll()
+        {
+            if (!CleanupCache()) return false;
+            if (!CleanupDB()) return false;
+            if (!CleanupLogs()) return false;
+            if (!CleanupTraces()) return false;
+            if (!CleanupStrategyAnalyzerLogs()) return false;
+            return true;
+        }
+
+        public bool CleanupStrategyAnalyzerLogs()
+        {
+            Error = string.Empty;
+            if (!VerifyInstallDirectory()) return false;
+
+            string logDirectory = Path.Combine(InstallDirectory, "strategyanalyzerlogs\\");
+            if (!Directory.Exists(logDirectory))
+            {
+                Error = $"Strategy Analyzer log directory '{logDirectory}' does not exist.";
+                return false;
+            }
+            return DeleteAllRecursive(logDirectory);
+        }
+
+        public bool CleanupLogs()
+        {
+            Error = string.Empty;
+            if (!VerifyInstallDirectory()) return false;
+
+            string logDirectory = Path.Combine(InstallDirectory,"log\\");
+            if (!Directory.Exists(logDirectory))
+            {
+                Error = $"Log directory '{logDirectory}' does not exist.";
+                return false;
+            }
+            return DeleteAllRecursive(logDirectory);
+        }
+
+        public bool CleanupTraces()
+        {
+            Error = string.Empty;
+            if (!VerifyInstallDirectory()) return false;
+
+            string traceDirectory = Path.Combine(InstallDirectory, "trace\\");
+            if (!Directory.Exists(traceDirectory))
+            {
+                Error = $"Trace directory '{traceDirectory}' does not exist.";
+                return false;
+            }
+            return DeleteAllRecursive(traceDirectory);
+        }
+
+        public bool CleanupCache()
+        {
+            Error = string.Empty;
+            if (!VerifyInstallDirectory()) return false;
+
+            string cacheDirectory = Path.Combine(InstallDirectory, "cache\\");
+            if (!Directory.Exists(cacheDirectory))
+            {
+                Error = $"Cache directory '{cacheDirectory}' does not exist.";
+                return false;
+            }
+            return DeleteAllRecursive(cacheDirectory);
+        }
+
+        public bool CleanupDB(DataInterval interval = DataInterval.All)
+        {
+            Error = string.Empty;
+            if (!VerifyInstallDirectory()) return false;
+
+            string dbDirectory = string.Empty;
+            switch (interval)
+            {
+                case DataInterval.All:
+                    if (!CleanupDB(DataInterval.Tick)) return false;
+                    if (!CleanupDB(DataInterval.Minute)) return false;
+                    if (!CleanupDB(DataInterval.Day)) return false;
+                    if (!CleanupDB(DataInterval.Replay)) return false;
+                    if (!CleanupDB(DataInterval.Cache)) return false;
+                    return true;
+                case DataInterval.Tick:
+                    dbDirectory = Path.Combine(InstallDirectory, "db\\tick\\");
+                    break;
+                case DataInterval.Minute:
+                    dbDirectory = Path.Combine(InstallDirectory, "db\\minute\\");
+                    break;
+                case DataInterval.Day:
+                    dbDirectory = Path.Combine(InstallDirectory, "db\\day\\");
+                    break;
+                case DataInterval.Replay:
+                    dbDirectory = Path.Combine(InstallDirectory, "db\\replay\\");
+                    break;
+                case DataInterval.Cache:
+                    dbDirectory = Path.Combine(InstallDirectory, "db\\cache\\");
+                    break;
+            }
+
+            if (string.IsNullOrEmpty(dbDirectory))
+            {
+                Error = $"Database interval unknown.";
+                return false;
+            }
+
+            if (!Directory.Exists(dbDirectory))
+            {
+                Error = $"Database directory '{dbDirectory}' does not exist.";
+                return false;
+            }
+
+            return DeleteAllRecursive(dbDirectory);
+        }
+
+    }
 }
