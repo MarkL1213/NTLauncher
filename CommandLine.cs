@@ -89,6 +89,18 @@ namespace NinjaTraderLauncher
 
             return false;
         }
+
+        public override string? ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            
+            if(UsesCharacter)
+                sb.Append($"  -{Character} {Name}     {Description} ");
+
+
+
+            return sb.ToString();
+        }
     }
 
     public class CommandLine

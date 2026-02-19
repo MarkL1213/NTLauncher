@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Windows;
 
 
@@ -21,15 +22,16 @@ namespace NinjaTraderLauncher
 
             CommandLineArgument newArgument;
             newArgument = new CommandLineArgument("Launch", "Workspace name to launch", true);
+            newArgument.UsesCharacter = true;
+            newArgument.Character = 'l';
             commandLine.AddArgument(newArgument);
-
             newArgument = new CommandLineArgument("Help", "Display command line help.");
             newArgument.UsesCharacter = true;
-            newArgument.Character= 'h';
+            newArgument.Character = 'h';
             commandLine.AddArgument(newArgument);
             newArgument = new CommandLineArgument("Safe", "Launch NinjaTrader in safe mode.");
             newArgument.UsesCharacter = true;
-            newArgument.Character = 'h';
+            newArgument.Character = 's';
             commandLine.AddArgument(newArgument);
 
             if (!commandLine.Parse(e.Args))
@@ -41,7 +43,21 @@ namespace NinjaTraderLauncher
 
             if (commandLine.Arguments["Help"].ArgumentFound)
             {
-                //show command line help
+                bool isFirstLine = true;
+                StringBuilder sb = new StringBuilder();
+                
+
+                foreach (string argName in commandLine.Arguments.Keys)
+                {
+                    CommandLineArgument arg = commandLine.Arguments[argName];
+                    if (isFirstLine)
+                    { sb.Append(arg.ToString()); isFirstLine = false; }
+                    else
+                        sb.Append("\r\n" + arg.ToString());
+                }
+
+                MessageBox.Show(sb.ToString());
+
                 Shutdown(0);
                 return;
             }
