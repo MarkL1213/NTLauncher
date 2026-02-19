@@ -83,7 +83,7 @@ namespace NinjaTraderLauncher
 
             foreach (string prefix in prefixes)
             {
-                if (arg == prefix + Name) return true;
+                if (arg.Equals(prefix + Name, StringComparison.OrdinalIgnoreCase)) return true;
                 if(UsesCharacter && arg == prefix + Character) return true;
             }
 
@@ -96,8 +96,6 @@ namespace NinjaTraderLauncher
             
             if(UsesCharacter)
                 sb.Append($"  -{Character} {Name}     {Description} ");
-
-
 
             return sb.ToString();
         }
