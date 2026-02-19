@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NinjaTraderLauncher"
         mc:Ignorable="d"
-        Title="NT Launcher" Height="192" Width="150" Icon="/NinjaTrader.ico" WindowStyle="ToolWindow" Background="#FFFF4200">
+        Title="NT Launcher" Height="192" Width="205" Icon="/NinjaTrader.ico" WindowStyle="ToolWindow" Background="#FFFF4200">
     <DockPanel>
         <Menu x:Name="MainMenu" Margin="0,0,0,0" DockPanel.Dock="Top">
             <MenuItem Header="E_xit" Click="MenuItem_Click"/>
@@ -13,10 +13,20 @@
         <TabControl x:Name="tabControl">
             <TabItem Header="Launcher">
                 <Grid>
-                    <Grid x:Name="LauncherControlGrid" Margin="0,0,0,0" Height="76">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid x:Name="LauncherControlGrid" Margin="0,0,0,0" Height="76" Grid.ColumnSpan="2" Grid.Row="0" Grid.Column="0">
                     </Grid>
-                    <Button x:Name="LaunchButton" Content="Launch" Margin="40,0,40,5" Click="LaunchButton_Click" Height="20" VerticalAlignment="Bottom"/>
+                    <Button x:Name="LaunchButton" Content="Launch" Margin="5,0,5,5" Click="LaunchButton_Click" Height="20" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1"/>
+                    <CheckBox x:Name="SafeModeCheckBox" Content="Safe Mode" HorizontalAlignment="Left" Margin="5,0,5,5" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1"/>
                 </Grid>
+
             </TabItem>
             <TabItem Header="Cleaner">
                 <Grid x:Name="CleanerControlGrid" Background="#FFE5E5E5">

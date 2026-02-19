@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using System.Net.Http.Headers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NinjaTraderLauncher
 {
@@ -16,20 +17,21 @@ namespace NinjaTraderLauncher
 
     public class StartupWorkspace
     {
-        public string WorkspaceName { get; set; }
+        public string WorkspaceName { get; set; } = string.Empty;
     }
 
     public class WorkspaceFile
     {
-        public string ConfigFileName { get; set; }
-        public string FilePath { get; set; }
+        public string ConfigFileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
 
-        public bool LaunchNinjaTrader()
+        public bool LaunchNinjaTrader(bool safeMode)
         {
             using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
             {
                 pProcess.StartInfo.FileName = LauncherOptions.NinjaTraderExecutable;
                 pProcess.StartInfo.UseShellExecute = false;
+                if(safeMode) pProcess.StartInfo.Arguments = "-safe";
                 return pProcess.Start();
             }
         }
@@ -131,14 +133,13 @@ namespace NinjaTraderLauncher
 
     public class NinjaTraderCleaner
     {
-        public NinjaTraderCleaner() { }
         public NinjaTraderCleaner(string installDirectory) { InstallDirectory = installDirectory; }
 
         public enum DataInterval { Tick, Minute, Day, Replay, Cache, All };
 
         public string InstallDirectory { set; get; }
 
-        public string Error { get; private set; }
+        public string Error { get; private set; } = string.Empty;
 
         public bool VerifyInstallDirectory()
         {
@@ -171,7 +172,7 @@ namespace NinjaTraderLauncher
                     dir.Delete(true);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Error = e.Message;
                 return false;
@@ -208,7 +209,7 @@ namespace NinjaTraderLauncher
             Error = string.Empty;
             if (!VerifyInstallDirectory()) return false;
 
-            string logDirectory = Path.Combine(InstallDirectory,"log\\");
+            string logDirectory = Path.Combine(InstallDirectory, "log\\");
             if (!Directory.Exists(logDirectory))
             {
                 Error = $"Log directory '{logDirectory}' does not exist.";
@@ -293,4 +294,166 @@ namespace NinjaTraderLauncher
         }
 
     }
+
+    public class NinjaTraderDatabaseManager
+    {
+        public const string NTDBDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8\\db\\";
+        public const string ManagerDBDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8 Backup\\db\\";
+
+        private string _ntdbDirectory;
+        private NinjaTraderDatabaseManager(string ntdbDirectory = NTDBDirectory)
+        {
+            _ntdbDirectory = ntdbDirectory;
+        }
+        public enum DataInterval { Tick, Minute, Day, Replay }
+
+        public string Error { get; private set; } = string.Empty;
+
+        public string GetIntervalFolder(string DBRoot,DataInterval interval)
+        {
+            string dir = string.Empty;
+            switch (interval)
+            {
+                case DataInterval.Tick: dir = Path.Combine(_ntdbDirectory, "tick\\"); break;
+                case DataInterval.Day: dir = Path.Combine(_ntdbDirectory, "day\\"); break;
+                case DataInterval.Minute: dir = Path.Combine(_ntdbDirectory, "minute\\"); break;
+                case DataInterval.Replay: dir = Path.Combine(_ntdbDirectory, "replay\\"); break;
+            }
+            return dir;
+        }
+
+        List<string> FindAllSymbols(DataInterval interval)
+        {
+            Error = string.Empty;
+            List<string> symbols = new List<string>();
+            string dir = GetIntervalFolder(_ntdbDirectory, interval);
+            if (!Directory.Exists(dir))
+            {
+                Error = $"Database directory '{dir}' does not exist.";
+                return symbols;
+            }
+
+            DirectoryInfo dbInfo = new DirectoryInfo(dir);
+            foreach (DirectoryInfo di in dbInfo.EnumerateDirectories(dir)) {
+                symbols.Add(di.Name);
+            }
+
+            return symbols;
+        }
+
+        //////////
+        //need utility functions to move specific data files into and out of the NT DB
+        //////////
+        //BackupAllDataFiles(symbol="")
+        public bool BackupAllDataFiles(string symbolToBackup = "")
+        {
+            if (!BackupAllDataFiles(DataInterval.Tick, symbolToBackup)) return false;
+            if (!BackupAllDataFiles(DataInterval.Minute, symbolToBackup)) return false;
+            if (!BackupAllDataFiles(DataInterval.Day, symbolToBackup)) return false;
+            return BackupAllDataFiles(DataInterval.Replay, symbolToBackup);
+        }
+
+        public bool BackupAllDataFiles(DataInterval interval, string symbolToBackup = "")
+        {
+            Error = string.Empty;
+            List<string> symbols;
+            if (string.IsNullOrEmpty(symbolToBackup))
+            {
+                symbols = FindAllSymbols(interval);
+                if (!string.IsNullOrEmpty(Error)) return false;
+            }
+            else
+            {
+                symbols = new List<string>();
+                symbols.Add(symbolToBackup);
+            }
+
+            string intervalFolder = GetIntervalFolder(_ntdbDirectory, interval);
+            string backupIntervalFolder = GetIntervalFolder(ManagerDBDirectory, interval);
+
+            foreach (string symbol in symbols)
+            {
+                string symbolFolderName = Path.Combine(intervalFolder, symbol);
+                DirectoryInfo si = new DirectoryInfo(symbolFolderName);
+                if (!si.Exists)
+                {
+                    Error = "";
+                    return false;
+                }
+
+                string backupSymbolFolderName = Path.Combine(backupIntervalFolder, symbol);
+                DirectoryInfo bsi = new DirectoryInfo(backupSymbolFolderName);
+                if (!bsi.Exists)
+                {
+                    try
+                    {
+                        bsi.Create();
+                    }
+                    catch (Exception ex)
+                    {
+                        Error = ex.Message;
+                        return false;
+                    }
+                }
+
+                foreach (FileInfo fi in si.EnumerateFiles())
+                {
+                    string backupFileName = Path.Combine(backupSymbolFolderName, fi.Name);
+                    FileInfo bfi = new FileInfo(backupFileName);
+                    bool backupCreated = false;
+                    string tmpBackupFile = bfi.FullName + ".tmp";
+                    if (bfi.Exists)
+                    {
+                        try
+                        {
+                            if (File.Exists(tmpBackupFile))
+                            {
+                                File.Delete(tmpBackupFile);
+                            }
+                            File.Move(bfi.FullName, tmpBackupFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            Error = ex.Message;
+                            return false;
+                        }
+                        backupCreated = true;
+                    }
+
+                    try
+                    {
+                        bfi = fi.CopyTo(backupFileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Error = ex.Message;
+                        if (backupCreated)
+                        {
+                            File.Move(tmpBackupFile, backupFileName);
+                        }
+                    }
+
+                    if (backupCreated)
+                    {
+                        try
+                        {
+                            File.Delete(tmpBackupFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            Error = ex.Message;
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+
+        //RestoreDataFile(DataInterval interval, string symbol, string fileName)
+        //BackupAndRemoveDataFile(DataInterval interval, string symbol, string fileName)
+    }
+
 }

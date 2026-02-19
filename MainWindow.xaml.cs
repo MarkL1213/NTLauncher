@@ -19,23 +19,24 @@ namespace NinjaTraderLauncher
         //StartupWorkspace codeworkWorkspace = new StartupWorkspace() { WorkspaceName = "Code Work" };
         //StartupWorkspace tradingWorkspace = new StartupWorkspace() { WorkspaceName = "Trading" };
 
-        WorkspaceFile _workspaceFile = null;
+        WorkspaceFile? _workspaceFile = null;
         NinjaTraderCleaner _cleaner;
-
+        App? _application;
         
 
         public MainWindow()
         {
             _cleaner = new NinjaTraderCleaner(LauncherOptions.NinjaTraderDocumentsDirectory);
 
-            App app = (App)Application.Current;
-            if(app == null)
+            _application = Application.Current as App;
+            if (_application == null)
             {
                 MessageBox.Show("Application is null");
                 Application.Current.Shutdown(1);
                 return;
             }
-            _workspaceFile = app.WorkspaceFile;
+
+            _workspaceFile = _application.WorkspaceFile;
             if (_workspaceFile == null)
             {
                 MessageBox.Show("Workspace file is null");
@@ -44,6 +45,9 @@ namespace NinjaTraderLauncher
             }
 
             InitializeComponent();
+            SafeModeCheckBox.IsChecked = _application.SafeMode;
+            SafeModeCheckBox.Checked += SafeModeCheckBox_Checked;
+            SafeModeCheckBox.Unchecked += SafeModeCheckBox_Unchecked;
 
             List<StartupWorkspace> validWorkspaces = _workspaceFile.DetectWorkspaces();
             string currentWorkspace = _workspaceFile.LookupCurrentWorkspace();
@@ -68,9 +72,21 @@ namespace NinjaTraderLauncher
             }
         }
 
+        private void SafeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _application!.SafeMode = false;
+        }
+
+        private void SafeModeCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            _application!.SafeMode = true;
+        }
+
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_workspaceFile.LaunchNinjaTrader())
+            if(_workspaceFile == null) return;
+
+            if (_workspaceFile.LaunchNinjaTrader(_application!.SafeMode))
             {
                 Application.Current.Shutdown();
             }
@@ -78,15 +94,15 @@ namespace NinjaTraderLauncher
 
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            RadioButton radioButton = sender as RadioButton;
-            StartupWorkspace workspace = radioButton.Tag as StartupWorkspace;
+            RadioButton? radioButton = sender as RadioButton;
+            StartupWorkspace? workspace = radioButton?.Tag as StartupWorkspace;
             if (workspace == null)
             {
                 MessageBox.Show("Error: Workspace radio button has no StartupWorkspace tag associated.");
                 return;
             }
 
-            string result = _workspaceFile.SetStartupWorkspace(workspace);
+            string? result = _workspaceFile?.SetStartupWorkspace(workspace);
             if (!string.IsNullOrEmpty(result))
             {
                 MessageBox.Show($"Error: Setting startup workspace to \"{workspace.WorkspaceName}\" failed: {result}");

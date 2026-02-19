@@ -10,7 +10,7 @@ namespace NinjaTraderLauncher
 {
     public class CommandLineParseError
     {
-        public CommandLineParseError(string message, CommandLineArgument argument = null)
+        public CommandLineParseError(string message, CommandLineArgument? argument = null)
         {
             Message = message;
             Argument = argument;
@@ -20,8 +20,7 @@ namespace NinjaTraderLauncher
 
         public bool HasSourceArgument { get { return Argument != null; } }
 
-        [AllowNull]
-        public CommandLineArgument Argument { internal set; get; }
+        public CommandLineArgument? Argument { internal set; get; }
     }
 
     public class CommandLineArgument
@@ -40,7 +39,7 @@ namespace NinjaTraderLauncher
 
             ArgumentFound = false;
         }
-        public CommandLineArgument(CommandLineArgument argument)
+        public CommandLineArgument(CommandLineArgument? argument)
         {
             if (argument == null) throw new ArgumentNullException(nameof(argument), "");
 
@@ -64,18 +63,17 @@ namespace NinjaTraderLauncher
             other.ArgumentFound = ArgumentFound;
         }
 
-        public string Name { set; get; }
-        public string Description { set; get; }
+        public string Name { set; get; } = string.Empty;
+        public string Description { set; get; } = string.Empty;
 
-        public char Character { set; get; }
-        public bool UsesCharacter { set; get; }
+        public char Character { set; get; } = '\0';
+        public bool UsesCharacter { set; get; } = false;
 
-        [AllowNull]
-        public string Value { internal set; get; }
-        public bool UsesValue { set; get; }
-        public bool ValueRequired { set; get; }
+        public string Value { internal set; get; } = string.Empty;
+        public bool UsesValue { set; get; } = false;
+        public bool ValueRequired { set; get; } = false;
 
-        public bool ArgumentFound { internal set; get; }
+        public bool ArgumentFound { internal set; get; } = false;
 
         public bool ArgMatch(string arg, List<string> prefixes)
         {

@@ -27,6 +27,10 @@ namespace NinjaTraderLauncher
             newArgument.UsesCharacter = true;
             newArgument.Character= 'h';
             commandLine.AddArgument(newArgument);
+            newArgument = new CommandLineArgument("Safe", "Launch NinjaTrader in safe mode.");
+            newArgument.UsesCharacter = true;
+            newArgument.Character = 'h';
+            commandLine.AddArgument(newArgument);
 
             if (!commandLine.Parse(e.Args))
             {
@@ -42,6 +46,11 @@ namespace NinjaTraderLauncher
                 return;
             }
 
+            if (commandLine.Arguments["Safe"].ArgumentFound)
+            {
+                SafeMode = true;
+            }
+
             if (commandLine.Arguments["Launch"].ArgumentFound)
             {
                 HandleLaunchArgument(commandLine.Arguments["Launch"]);
@@ -51,6 +60,9 @@ namespace NinjaTraderLauncher
             MainWindow mainWindow = new MainWindow();
             mainWindow.Show();
         }
+
+        public bool SafeMode { get; set; } = false;
+
 
         private bool HandleLaunchArgument(CommandLineArgument launch)
         {
@@ -70,7 +82,7 @@ namespace NinjaTraderLauncher
                 return false;
             }
 
-            if (!_workspaceFile.LaunchNinjaTrader())
+            if (!_workspaceFile.LaunchNinjaTrader(SafeMode))
             {
                 MessageBox.Show("Failed to launch NinjaTrader application.");
                 Shutdown(7);
