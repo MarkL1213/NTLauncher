@@ -6,14 +6,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <PackageIcon></PackageIcon>
+    <ApplicationIcon>Launcher2.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="NinjaTrader.ico" />
+    <Content Include="Launcher2.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="NinjaTrader.ico" />
+    <None Update="Launcher2.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="Launcher2.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

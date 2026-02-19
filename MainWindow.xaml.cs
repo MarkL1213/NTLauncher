@@ -11,18 +11,11 @@ using System.Windows.Shapes;
 
 namespace NinjaTraderLauncher
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        //StartupWorkspace codeworkWorkspace = new StartupWorkspace() { WorkspaceName = "Code Work" };
-        //StartupWorkspace tradingWorkspace = new StartupWorkspace() { WorkspaceName = "Trading" };
-
         WorkspaceFile? _workspaceFile = null;
         NinjaTraderCleaner _cleaner;
         App? _application;
-        
 
         public MainWindow()
         {
@@ -92,6 +85,18 @@ namespace NinjaTraderLauncher
             }
         }
 
+        private void LaunchAndCleanButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_workspaceFile == null) return;
+
+            performCleanup();
+
+            if (_workspaceFile.LaunchNinjaTrader(_application!.SafeMode))
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
         private void RadioButton_Checked(object sender, RoutedEventArgs e)
         {
             RadioButton? radioButton = sender as RadioButton;
@@ -108,7 +113,6 @@ namespace NinjaTraderLauncher
                 MessageBox.Show($"Error: Setting startup workspace to \"{workspace.WorkspaceName}\" failed: {result}");
             }
         }
-
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -134,9 +138,13 @@ namespace NinjaTraderLauncher
             }
         }
 
-
         private void cleanButton_Click(object sender, RoutedEventArgs e)
         {
+            performCleanup();
+        }
+
+        private void performCleanup()
+        { 
             bool isAllChecked = cleanAllCheckBox.IsChecked == null ? false : ((bool)cleanAllCheckBox.IsChecked);
             
 
@@ -179,6 +187,5 @@ namespace NinjaTraderLauncher
             }
 
         }
-
     }
 }
