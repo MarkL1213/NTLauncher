@@ -29,7 +29,7 @@ namespace NinjaTraderLauncher
             newArgument.UsesCharacter = true;
             newArgument.Character = 'h';
             commandLine.AddArgument(newArgument);
-            newArgument = new CommandLineArgument("Safe", "Launch NinjaTrader in safe mode.");
+            newArgument = new CommandLineArgument("Safe", "Set safe mode for launch.");
             newArgument.UsesCharacter = true;
             newArgument.Character = 's';
             commandLine.AddArgument(newArgument);
