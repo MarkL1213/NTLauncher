@@ -19,7 +19,7 @@ namespace NinjaTraderLauncher
 
         public MainWindow()
         {
-            _cleaner = new NinjaTraderCleaner(LauncherOptions.NinjaTraderDocumentsDirectory);
+            _cleaner = new NinjaTraderCleaner(new LauncherOptions().NinjaTraderDocumentsDirectory);
 
             _application = Application.Current as App;
             if (_application == null)

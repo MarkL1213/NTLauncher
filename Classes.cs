@@ -1,18 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.Win32;
 using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NinjaTraderLauncher
 {
     public class LauncherOptions
     {
-        public const string NinjaTraderExecutable = "C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe";
-        public const string NinjaTraderDocumentsDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8";
+        public LauncherOptions()
+        {
+
+        }
+
+        private string GetInstallDirectory()
+        {
+            string regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\NinjaTrader, LLC\\NinjaTrader";
+            string? regValue = Registry.GetValue(regKey,"InstallDir",string.Empty) as string;
+            if (string.IsNullOrEmpty(regValue)) { return string.Empty; }
+            return regValue!;
+        }
+
+        public string NinjaTreaderDBDirectory { get { return Path.Combine(NinjaTraderDocumentsDirectory, "db"); } }
+        public string NinjaTraderExecutable { get { return Path.Combine(GetInstallDirectory(),"bin","NinjaTrader.exe"); } }
+        public string NinjaTraderDocumentsDirectory { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"NinjaTrader 8"); }
+}
     }
 
     public class StartupWorkspace
@@ -29,7 +38,8 @@ namespace NinjaTraderLauncher
         {
             using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
             {
-                pProcess.StartInfo.FileName = LauncherOptions.NinjaTraderExecutable;
+                LauncherOptions lo = new LauncherOptions();
+                pProcess.StartInfo.FileName = lo.NinjaTraderExecutable;
                 pProcess.StartInfo.UseShellExecute = false;
                 if(safeMode) pProcess.StartInfo.Arguments = "-safe";
                 return pProcess.Start();
