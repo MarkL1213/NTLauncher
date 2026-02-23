@@ -49,11 +49,13 @@
                                         <RowDefinition/>
                                         <RowDefinition/>
                                         <RowDefinition/>
+                                        <RowDefinition/>
                                     </Grid.RowDefinitions>
                                     <CheckBox x:Name="cleanCacheCheckBox" Content="Reflection Cache" HorizontalAlignment="Left" Margin="12,0,0,0" Grid.Row="0" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="cleanLogCheckBox" Content="Log Files" HorizontalAlignment="Left" Margin="12,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="cleanTraceCheckBox" Content="Trace Files" HorizontalAlignment="Left" Margin="12,0,0,0" Grid.Row="2" VerticalAlignment="Center"/>
                                     <CheckBox x:Name="cleanDBCheckBox" Content="Price Data" HorizontalAlignment="Left" Margin="12,0,0,0" Grid.Row="3" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="cleanAnalyzerLogsCheckBox" Content="Analyzer Logs" HorizontalAlignment="Left" Margin="12,0,0,0" Grid.Row="4" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <CheckBox x:Name="cleanAllCheckBox" Content="Clean All" HorizontalAlignment="Center" Margin="12,0,0,0" VerticalAlignment="Top" Grid.Row="1" Checked="cleanAllCheckBox_Checked" Unchecked="cleanAllCheckBox_Checked"/>

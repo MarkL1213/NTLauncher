@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.IO;
+using System.Xml.Linq;
 
 namespace NinjaTraderLauncher
 {
@@ -31,17 +32,25 @@ namespace NinjaTraderLauncher
 
     public class WorkspaceFile
     {
+        LauncherOptions _lo = new LauncherOptions();
+        public WorkspaceFile()
+        {
+            ConfigFileName = "_Workspaces.xml";
+            FilePath = Path.Combine(_lo.NinjaTraderDocumentsDirectory, "workspaces\\");
+        }
+
         public string ConfigFileName { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;
 
         public bool LaunchNinjaTrader(bool safeMode)
         {
+            if (!File.Exists(_lo.NinjaTraderExecutable)) return false;
+
             using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
             {
-                LauncherOptions lo = new LauncherOptions();
-                pProcess.StartInfo.FileName = lo.NinjaTraderExecutable;
+                pProcess.StartInfo.FileName = _lo.NinjaTraderExecutable;
                 pProcess.StartInfo.UseShellExecute = false;
-                if(safeMode) pProcess.StartInfo.Arguments = "-safe";
+                if (safeMode) pProcess.StartInfo.Arguments = "-safe";
                 return pProcess.Start();
             }
         }
@@ -49,38 +58,46 @@ namespace NinjaTraderLauncher
         public string SetStartupWorkspace(StartupWorkspace workspace)
         {
             string fullPath = Path.Combine(FilePath, ConfigFileName);
-
-            if (!File.Exists(fullPath))
-            {
-                return "File does not exist";
-            }
-
+            string bakPath = Path.Combine(FilePath, ConfigFileName + ".bak");
+            string tmpPath = Path.Combine(FilePath, ConfigFileName + ".tmp");
+            XDocument xDoc = new XDocument();
             try
             {
-                string[] lines = File.ReadAllLines(fullPath);
-                int lineIndex = -1;
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (lines[i].StartsWith("  <ActiveWorkspace>", StringComparison.CurrentCulture))
-                    {
-                        lineIndex = i;
-                        break;
-                    }
-                }
-                if (lineIndex == -1)
-                {
-                    return "ActiveWorkspace tag not found in file";
-                }
-                lines[lineIndex] = $"  <ActiveWorkspace>{workspace.WorkspaceName}</ActiveWorkspace>";
+                if (!File.Exists(fullPath)) { return "File does not exist"; }
 
-                File.WriteAllLines(fullPath, lines);
+                File.Copy(fullPath, bakPath, true);
+
+                xDoc = XDocument.Load(fullPath);
+
+                XElement? root = xDoc.Element("NinjaTrader");
+                if (root == null) { return "Root node is missing."; }
+
+                XElement? activeElement = root.Element("ActiveWorkspace");
+                if (activeElement == null) { return "Active workspace node is missing."; }
+
+                activeElement.Value = workspace.WorkspaceName;
+
+                xDoc.Save(tmpPath);
+
+                File.Move(tmpPath, fullPath);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return ex.Message;
+                RestoreFromBackup(bakPath);
+                return e.Message;
             }
 
             return string.Empty;
+        }
+
+        private void RestoreFromBackup(string backupPath)
+        {
+            if (File.Exists(backupPath))
+            {
+                string fullPath = Path.Combine(FilePath, ConfigFileName);
+                File.Copy(backupPath, fullPath, true);
+                File.Delete(backupPath); // Optional: Clean up after restore
+            }
         }
 
         public List<StartupWorkspace> DetectWorkspaces()
@@ -112,56 +129,48 @@ namespace NinjaTraderLauncher
         public string LookupCurrentWorkspace()
         {
             string fullPath = Path.Combine(FilePath, ConfigFileName);
-
-            if (!File.Exists(fullPath))
-            {
-                return string.Empty;
-            }
+            XDocument xDoc = new XDocument();
             try
             {
-                string[] lines = File.ReadAllLines(fullPath);
-                foreach (string line in lines)
-                {
-                    if (line.StartsWith("  <ActiveWorkspace>", StringComparison.CurrentCulture))
-                    {
-                        int startIndex = line.IndexOf('>') + 1;
-                        int endIndex = line.IndexOf("</ActiveWorkspace>");
-                        if (startIndex >= 0 && endIndex > startIndex)
-                        {
-                            return line.Substring(startIndex, endIndex - startIndex);
-                        }
-                    }
-                }
+                if (!File.Exists(fullPath)) return string.Empty;
+                xDoc = XDocument.Load(fullPath);
+
+                XElement? root = xDoc.Element("NinjaTrader");
+                if (root == null) { return string.Empty; }
+
+                XElement? activeElement = root.Element("ActiveWorkspace");
+                if (activeElement == null) { return string.Empty; }
+
+                return activeElement.Value;
             }
             catch
             {
                 return string.Empty;
             }
-            return string.Empty;
         }
     }
 
     public class NinjaTraderCleaner
     {
-        public NinjaTraderCleaner(string installDirectory) { InstallDirectory = installDirectory; }
+        public NinjaTraderCleaner(string documentsDirectory) { DocumentsDirectory = documentsDirectory; }
 
         public enum DataInterval { Tick, Minute, Day, Replay, Cache, All };
 
-        public string InstallDirectory { set; get; }
+        public string DocumentsDirectory { set; get; }
 
         public string Error { get; private set; } = string.Empty;
 
-        public bool VerifyInstallDirectory()
+        public bool VerifyDocumentsDirectory()
         {
             Error = string.Empty;
-            if (string.IsNullOrEmpty(InstallDirectory))
+            if (string.IsNullOrEmpty(DocumentsDirectory))
             {
                 Error = "Install directory is not set.";
                 return false;
             }
-            if (!Directory.Exists(InstallDirectory))
+            if (!Directory.Exists(DocumentsDirectory))
             {
-                Error = $"Install directory '{InstallDirectory}' does not exist.";
+                Error = $"Install directory '{DocumentsDirectory}' does not exist.";
                 return false;
             }
             return true;
@@ -203,63 +212,47 @@ namespace NinjaTraderLauncher
         public bool CleanupStrategyAnalyzerLogs()
         {
             Error = string.Empty;
-            if (!VerifyInstallDirectory()) return false;
+            if (!VerifyDocumentsDirectory()) return false;
 
-            string logDirectory = Path.Combine(InstallDirectory, "strategyanalyzerlogs\\");
-            if (!Directory.Exists(logDirectory))
-            {
-                Error = $"Strategy Analyzer log directory '{logDirectory}' does not exist.";
-                return false;
-            }
+            string logDirectory = Path.Combine(DocumentsDirectory, "strategyanalyzerlogs\\");
+            if (!Directory.Exists(logDirectory)) return true;
             return DeleteAllRecursive(logDirectory);
         }
 
         public bool CleanupLogs()
         {
             Error = string.Empty;
-            if (!VerifyInstallDirectory()) return false;
+            if (!VerifyDocumentsDirectory()) return false;
 
-            string logDirectory = Path.Combine(InstallDirectory, "log\\");
-            if (!Directory.Exists(logDirectory))
-            {
-                Error = $"Log directory '{logDirectory}' does not exist.";
-                return false;
-            }
+            string logDirectory = Path.Combine(DocumentsDirectory, "log\\");
+            if (!Directory.Exists(logDirectory)) return true;
             return DeleteAllRecursive(logDirectory);
         }
 
         public bool CleanupTraces()
         {
             Error = string.Empty;
-            if (!VerifyInstallDirectory()) return false;
+            if (!VerifyDocumentsDirectory()) return false;
 
-            string traceDirectory = Path.Combine(InstallDirectory, "trace\\");
-            if (!Directory.Exists(traceDirectory))
-            {
-                Error = $"Trace directory '{traceDirectory}' does not exist.";
-                return false;
-            }
+            string traceDirectory = Path.Combine(DocumentsDirectory, "trace\\");
+            if (!Directory.Exists(traceDirectory)) return true;
             return DeleteAllRecursive(traceDirectory);
         }
 
         public bool CleanupCache()
         {
             Error = string.Empty;
-            if (!VerifyInstallDirectory()) return false;
+            if (!VerifyDocumentsDirectory()) return false;
 
-            string cacheDirectory = Path.Combine(InstallDirectory, "cache\\");
-            if (!Directory.Exists(cacheDirectory))
-            {
-                Error = $"Cache directory '{cacheDirectory}' does not exist.";
-                return false;
-            }
+            string cacheDirectory = Path.Combine(DocumentsDirectory, "cache\\");
+            if (!Directory.Exists(cacheDirectory)) return true;
             return DeleteAllRecursive(cacheDirectory);
         }
 
         public bool CleanupDB(DataInterval interval = DataInterval.All)
         {
             Error = string.Empty;
-            if (!VerifyInstallDirectory()) return false;
+            if (!VerifyDocumentsDirectory()) return false;
 
             string dbDirectory = string.Empty;
             switch (interval)
@@ -272,19 +265,19 @@ namespace NinjaTraderLauncher
                     if (!CleanupDB(DataInterval.Cache)) return false;
                     return true;
                 case DataInterval.Tick:
-                    dbDirectory = Path.Combine(InstallDirectory, "db\\tick\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\tick\\");
                     break;
                 case DataInterval.Minute:
-                    dbDirectory = Path.Combine(InstallDirectory, "db\\minute\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\minute\\");
                     break;
                 case DataInterval.Day:
-                    dbDirectory = Path.Combine(InstallDirectory, "db\\day\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\day\\");
                     break;
                 case DataInterval.Replay:
-                    dbDirectory = Path.Combine(InstallDirectory, "db\\replay\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\replay\\");
                     break;
                 case DataInterval.Cache:
-                    dbDirectory = Path.Combine(InstallDirectory, "db\\cache\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\cache\\");
                     break;
             }
 

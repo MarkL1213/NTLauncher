@@ -1,13 +1,5 @@
-﻿using System.Text;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NinjaTraderLauncher
 {
@@ -51,7 +43,8 @@ namespace NinjaTraderLauncher
                 rb.Name = workspace.WorkspaceName.Replace(' ', '_') + "_RadioButton";
                 rb.Content = workspace.WorkspaceName;
                 rb.Tag = workspace;
-                if(currentWorkspace ==  workspace.WorkspaceName) rb.IsChecked = true;
+                rb.GroupName = "Workspaces";
+                if (currentWorkspace ==  workspace.WorkspaceName) rb.IsChecked = true;
                 rb.Checked += RadioButton_Checked;
                 Thickness t = new Thickness();
                 t.Left = 27;
@@ -128,6 +121,7 @@ namespace NinjaTraderLauncher
                 cleanTraceCheckBox.IsEnabled = false;
                 cleanCacheCheckBox.IsEnabled = false;
                 cleanDBCheckBox.IsEnabled = false;
+                cleanAnalyzerLogsCheckBox.IsEnabled = false;
             }
             else
             {
@@ -135,6 +129,7 @@ namespace NinjaTraderLauncher
                 cleanTraceCheckBox.IsEnabled = true;
                 cleanCacheCheckBox.IsEnabled = true;
                 cleanDBCheckBox.IsEnabled = true;
+                cleanAnalyzerLogsCheckBox.IsEnabled = true;
             }
         }
 
@@ -162,6 +157,7 @@ namespace NinjaTraderLauncher
                 bool isLogChecked = cleanLogCheckBox.IsChecked == null ? false : ((bool)cleanLogCheckBox.IsChecked);
                 bool isTraceChecked = cleanTraceCheckBox.IsChecked == null ? false : ((bool)cleanTraceCheckBox.IsChecked);
                 bool isDBChecked = cleanDBCheckBox.IsChecked == null ? false : ((bool)cleanDBCheckBox.IsChecked);
+                bool isAnalyzerLogsChecked = cleanAnalyzerLogsCheckBox.IsChecked == null ? false : ((bool)cleanAnalyzerLogsCheckBox.IsChecked);
 
                 if (isCacheChecked && !_cleaner.CleanupCache())
                 {
@@ -181,6 +177,11 @@ namespace NinjaTraderLauncher
                 if (isDBChecked && !_cleaner.CleanupDB())
                 {
                     MessageBox.Show(_cleaner.Error, "DB Clean Error");
+                    return;
+                }
+                if (isAnalyzerLogsChecked && !_cleaner.CleanupStrategyAnalyzerLogs())
+                {
+                    MessageBox.Show(_cleaner.Error, "Analyzer Log Clean Error");
                     return;
                 }
 

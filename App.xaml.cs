@@ -1,7 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+﻿using System.Text;
 using System.Windows;
 
 
@@ -12,7 +9,7 @@ namespace NinjaTraderLauncher
     /// </summary>
     public partial class App : Application
     {
-        WorkspaceFile _workspaceFile = new WorkspaceFile() { ConfigFileName = "_Workspaces.xml", FilePath = "C:\\Users\\Mark\\Documents\\NinjaTrader 8\\workspaces\\" };
+        WorkspaceFile _workspaceFile = new WorkspaceFile();
         public WorkspaceFile WorkspaceFile { get { return _workspaceFile; } }
 
         void AppStartup(object sender, StartupEventArgs e)
