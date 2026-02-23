@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.IO;
+using System.Windows.Shell;
 using System.Xml.Linq;
 
 namespace NinjaTraderLauncher
@@ -58,14 +59,14 @@ namespace NinjaTraderLauncher
         public string SetStartupWorkspace(StartupWorkspace workspace)
         {
             string fullPath = Path.Combine(FilePath, ConfigFileName);
-            string bakPath = Path.Combine(FilePath, ConfigFileName + ".bak");
+            
             string tmpPath = Path.Combine(FilePath, ConfigFileName + ".tmp");
             XDocument xDoc = new XDocument();
             try
             {
                 if (!File.Exists(fullPath)) { return "File does not exist"; }
 
-                File.Copy(fullPath, bakPath, true);
+                //File.Copy(fullPath, bakPath, true);
 
                 xDoc = XDocument.Load(fullPath);
 
@@ -83,20 +84,41 @@ namespace NinjaTraderLauncher
             }
             catch (Exception e)
             {
-                RestoreFromBackup(bakPath);
+                //RestoreFromBackup(bakPath);
                 return e.Message;
             }
 
             return string.Empty;
         }
 
-        private void RestoreFromBackup(string backupPath)
+        string _backupPath = string.Empty;
+        private string CreateBackup()
         {
-            if (File.Exists(backupPath))
+            string fullPath = Path.Combine(FilePath, ConfigFileName);
+            _backupPath = Path.Combine(FilePath, ConfigFileName + ".bak");
+
+            try
+            {
+                if (!File.Exists(fullPath)) { return "File does not exist"; }
+                File.Copy(fullPath, _backupPath, true);
+            }
+            catch (Exception e)
+            {
+
+                return e.Message;
+            }
+
+            return string.Empty;
+        }
+
+        private void RestoreFromBackup()
+        {
+            if(string.IsNullOrEmpty(_backupPath)) return;
+            if (File.Exists(_backupPath))
             {
                 string fullPath = Path.Combine(FilePath, ConfigFileName);
-                File.Copy(backupPath, fullPath, true);
-                File.Delete(backupPath); // Optional: Clean up after restore
+                File.Copy(_backupPath, fullPath, true);
+                File.Delete(_backupPath); // Optional: Clean up after restore
             }
         }
 
