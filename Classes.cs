@@ -91,8 +91,8 @@ namespace NinjaTraderLauncher
             return string.Empty;
         }
 
-        string _backupPath = string.Empty;
-        private string CreateBackup()
+        public string _backupPath = string.Empty;
+        internal string CreateBackup()
         {
             string fullPath = Path.Combine(FilePath, ConfigFileName);
             _backupPath = Path.Combine(FilePath, ConfigFileName + ".bak");
@@ -111,15 +111,19 @@ namespace NinjaTraderLauncher
             return string.Empty;
         }
 
-        private void RestoreFromBackup()
+        public bool RestoreFromBackup()
         {
-            if(string.IsNullOrEmpty(_backupPath)) return;
+            if(string.IsNullOrEmpty(_backupPath)) return false;
             if (File.Exists(_backupPath))
             {
                 string fullPath = Path.Combine(FilePath, ConfigFileName);
+
                 File.Copy(_backupPath, fullPath, true);
                 File.Delete(_backupPath); // Optional: Clean up after restore
+                return true;
             }
+
+            return false;
         }
 
         public List<StartupWorkspace> DetectWorkspaces()
