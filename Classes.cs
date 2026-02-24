@@ -87,8 +87,6 @@ namespace NinjaTraderLauncher
             {
                 if (!File.Exists(fullPath)) { return "File does not exist"; }
 
-                //File.Copy(fullPath, bakPath, true);
-
                 xDoc = XDocument.Load(fullPath);
 
                 XElement? root = xDoc.Element("NinjaTrader");
@@ -99,13 +97,13 @@ namespace NinjaTraderLauncher
 
                 activeElement.Value = workspace.WorkspaceName;
 
+                
                 xDoc.Save(tmpPath);
-
-                File.Move(tmpPath, fullPath);
+                
+                File.Move(tmpPath, fullPath, true);
             }
             catch (Exception e)
             {
-                //RestoreFromBackup(bakPath);
                 return e.Message;
             }
 
