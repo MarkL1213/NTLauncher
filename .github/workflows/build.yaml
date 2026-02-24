@@ -1,5 +1,8 @@
 name: Build and Release NinjaForge
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
