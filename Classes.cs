@@ -1,28 +1,41 @@
 ﻿using Microsoft.Win32;
 using System.IO;
+using System.Windows;
+using System.Windows.Media.Media3D;
 using System.Windows.Shell;
 using System.Xml.Linq;
 
 namespace NinjaTraderLauncher
 {
-    public class LauncherOptions
+    public class NinjaTraderInstallSettings
     {
-        public LauncherOptions()
-        {
+        string _installDirectory = string.Empty;
+        string _error= string.Empty;
 
+        public string Error { get { return _error; } }
+        public bool HasError { get { return !string.IsNullOrEmpty(_error); } }
+        public NinjaTraderInstallSettings()
+        {
+            try
+            {
+                string regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\NinjaTrader, LLC\\NinjaTrader";
+                string? regValue = Registry.GetValue(regKey, "InstallDir", string.Empty) as string;
+                if (string.IsNullOrEmpty(regValue))
+                {
+                    _error = "NinjaTrader 8 install not detected.";
+                }
+                else _installDirectory = regValue;
+            }
+            catch (Exception ex)
+            {
+                _error = $"NinjaTrader 8 install not detected. {ex.Message}";
+            }
         }
 
-        private string GetInstallDirectory()
-        {
-            string regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\NinjaTrader, LLC\\NinjaTrader";
-            string? regValue = Registry.GetValue(regKey,"InstallDir",string.Empty) as string;
-            if (string.IsNullOrEmpty(regValue)) { return string.Empty; }
-            return regValue!;
-        }
-
-        public string NinjaTreaderDBDirectory { get { return Path.Combine(NinjaTraderDocumentsDirectory, "db"); } }
-        public string NinjaTraderExecutable { get { return Path.Combine(GetInstallDirectory(),"bin","NinjaTrader.exe"); } }
-        public string NinjaTraderDocumentsDirectory { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"NinjaTrader 8"); }
+        public string InstallDirectory { get { return _installDirectory; } }
+        public string DBDirectory { get { return Path.Combine(DocumentsDirectory, "db"); } }
+        public string Executable { get { return Path.Combine(_installDirectory,"bin","NinjaTrader.exe"); } }
+        public string DocumentsDirectory { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"NinjaTrader 8"); }
 }
     }
 
@@ -33,11 +46,11 @@ namespace NinjaTraderLauncher
 
     public class WorkspaceFile
     {
-        LauncherOptions _lo = new LauncherOptions();
+        NinjaTraderInstallSettings _ntInstall = new NinjaTraderInstallSettings();
         public WorkspaceFile()
         {
             ConfigFileName = "_Workspaces.xml";
-            FilePath = Path.Combine(_lo.NinjaTraderDocumentsDirectory, "workspaces\\");
+            FilePath = Path.Combine(_ntInstall.DocumentsDirectory, "workspaces");
         }
 
         public string ConfigFileName { get; set; } = string.Empty;
@@ -45,11 +58,19 @@ namespace NinjaTraderLauncher
 
         public bool LaunchNinjaTrader(bool safeMode)
         {
-            if (!File.Exists(_lo.NinjaTraderExecutable)) return false;
+            if (_ntInstall.HasError || !File.Exists(_ntInstall.Executable))
+            {
+                MessageBox.Show(_ntInstall.HasError
+                    ? $"Launch error. Valid install not detected. {_ntInstall.Error}"
+                    : $"Launch error. Valid install not detected.",
+                    "Launch Error", MessageBoxButton.OK);
+
+                return false;
+            }
 
             using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
             {
-                pProcess.StartInfo.FileName = _lo.NinjaTraderExecutable;
+                pProcess.StartInfo.FileName = _ntInstall.Executable;
                 pProcess.StartInfo.UseShellExecute = false;
                 if (safeMode) pProcess.StartInfo.Arguments = "-safe";
                 return pProcess.Start();
@@ -240,7 +261,7 @@ namespace NinjaTraderLauncher
             Error = string.Empty;
             if (!VerifyDocumentsDirectory()) return false;
 
-            string logDirectory = Path.Combine(DocumentsDirectory, "strategyanalyzerlogs\\");
+            string logDirectory = Path.Combine(DocumentsDirectory, "strategyanalyzerlogs");
             if (!Directory.Exists(logDirectory)) return true;
             return DeleteAllRecursive(logDirectory);
         }
@@ -250,7 +271,7 @@ namespace NinjaTraderLauncher
             Error = string.Empty;
             if (!VerifyDocumentsDirectory()) return false;
 
-            string logDirectory = Path.Combine(DocumentsDirectory, "log\\");
+            string logDirectory = Path.Combine(DocumentsDirectory, "log");
             if (!Directory.Exists(logDirectory)) return true;
             return DeleteAllRecursive(logDirectory);
         }
@@ -260,7 +281,7 @@ namespace NinjaTraderLauncher
             Error = string.Empty;
             if (!VerifyDocumentsDirectory()) return false;
 
-            string traceDirectory = Path.Combine(DocumentsDirectory, "trace\\");
+            string traceDirectory = Path.Combine(DocumentsDirectory, "trace");
             if (!Directory.Exists(traceDirectory)) return true;
             return DeleteAllRecursive(traceDirectory);
         }
@@ -270,7 +291,7 @@ namespace NinjaTraderLauncher
             Error = string.Empty;
             if (!VerifyDocumentsDirectory()) return false;
 
-            string cacheDirectory = Path.Combine(DocumentsDirectory, "cache\\");
+            string cacheDirectory = Path.Combine(DocumentsDirectory, "cache");
             if (!Directory.Exists(cacheDirectory)) return true;
             return DeleteAllRecursive(cacheDirectory);
         }
@@ -291,19 +312,19 @@ namespace NinjaTraderLauncher
                     if (!CleanupDB(DataInterval.Cache)) return false;
                     return true;
                 case DataInterval.Tick:
-                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\tick\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db","tick");
                     break;
                 case DataInterval.Minute:
-                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\minute\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db","minute");
                     break;
                 case DataInterval.Day:
-                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\day\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db","day");
                     break;
                 case DataInterval.Replay:
-                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\replay\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db","replay");
                     break;
                 case DataInterval.Cache:
-                    dbDirectory = Path.Combine(DocumentsDirectory, "db\\cache\\");
+                    dbDirectory = Path.Combine(DocumentsDirectory, "db","cache");
                     break;
             }
 
@@ -324,15 +345,20 @@ namespace NinjaTraderLauncher
 
     }
 
+    ///
+    /// IGNORE: This class is a work in progress for potential new feature support.
+    ///
     public class NinjaTraderDatabaseManager
     {
-        public const string NTDBDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8\\db\\";
-        public const string ManagerDBDirectory = "C:\\Users\\Mark\\Documents\\NinjaTrader 8 Backup\\db\\";
-
-        private string _ntdbDirectory;
-        private NinjaTraderDatabaseManager(string ntdbDirectory = NTDBDirectory)
+        public string ManagerDBDirectory
         {
-            _ntdbDirectory = ntdbDirectory;
+            get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "NinjaTrader 8 Backup", "db"); }
+        }
+
+        private NinjaTraderInstallSettings _ntInstall;
+        private NinjaTraderDatabaseManager()
+        {
+            _ntInstall = new NinjaTraderInstallSettings();
         }
         public enum DataInterval { Tick, Minute, Day, Replay }
 
@@ -343,10 +369,10 @@ namespace NinjaTraderLauncher
             string dir = string.Empty;
             switch (interval)
             {
-                case DataInterval.Tick: dir = Path.Combine(_ntdbDirectory, "tick\\"); break;
-                case DataInterval.Day: dir = Path.Combine(_ntdbDirectory, "day\\"); break;
-                case DataInterval.Minute: dir = Path.Combine(_ntdbDirectory, "minute\\"); break;
-                case DataInterval.Replay: dir = Path.Combine(_ntdbDirectory, "replay\\"); break;
+                case DataInterval.Tick: dir = Path.Combine(_ntInstall.DBDirectory, "tick"); break;
+                case DataInterval.Day: dir = Path.Combine(_ntInstall.DBDirectory, "day"); break;
+                case DataInterval.Minute: dir = Path.Combine(_ntInstall.DBDirectory, "minute"); break;
+                case DataInterval.Replay: dir = Path.Combine(_ntInstall.DBDirectory, "replay"); break;
             }
             return dir;
         }
@@ -355,7 +381,7 @@ namespace NinjaTraderLauncher
         {
             Error = string.Empty;
             List<string> symbols = new List<string>();
-            string dir = GetIntervalFolder(_ntdbDirectory, interval);
+            string dir = GetIntervalFolder(_ntInstall.DBDirectory, interval);
             if (!Directory.Exists(dir))
             {
                 Error = $"Database directory '{dir}' does not exist.";
@@ -397,7 +423,7 @@ namespace NinjaTraderLauncher
                 symbols.Add(symbolToBackup);
             }
 
-            string intervalFolder = GetIntervalFolder(_ntdbDirectory, interval);
+            string intervalFolder = GetIntervalFolder(_ntInstall.DBDirectory, interval);
             string backupIntervalFolder = GetIntervalFolder(ManagerDBDirectory, interval);
 
             foreach (string symbol in symbols)

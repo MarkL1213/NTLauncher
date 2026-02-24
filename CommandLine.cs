@@ -141,18 +141,21 @@ namespace NinjaTraderLauncher
 
         public void Clear() { _prefixes.Clear(); _arguments.Clear(); Reset(); }
         
-        public void AddPrefix(string prefix)
+        public void AddPrefix(string prefix,bool doSort=true)
         {
             _prefixes.Add(prefix);
+            if (doSort) { _prefixes = _prefixes.OrderByDescending(a => a.Length).ToList(); }
         }
         public void AddPrefixes(List<string> prefixes)
         {
-            foreach (string prefix in prefixes) { AddPrefix(prefix); }
+            foreach (string prefix in prefixes) { AddPrefix(prefix, false); }
+            _prefixes = _prefixes.OrderByDescending(a => a.Length).ToList();
         }
 
         public void AddPrefixes(string[] prefixes)
         {
-            foreach (string prefix in prefixes) { AddPrefix(prefix); }
+            foreach (string prefix in prefixes) { AddPrefix(prefix, false); }
+            _prefixes = _prefixes.OrderByDescending(a => a.Length).ToList();
         }
 
         public void AddArgument(CommandLineArgument argument)
@@ -192,24 +195,39 @@ namespace NinjaTraderLauncher
             return !HasError;
         }
 
-        private bool StartsWithPrefix(string arg)
+        private int StartsWithPrefix(string arg)
         {
-            foreach (string prefix in _prefixes)
+            for(int i=0;i<_prefixes.Count;i++)
             {
-                if (arg.StartsWith(prefix)) return true;
+                if (arg.StartsWith(_prefixes[i])) return i;
             }
-            return false;
+            return -1;
         }
 
         private bool ParseArg(string[] args, ref int i)
         {
             if (i >= args.Length || i < 0) throw new ArgumentOutOfRangeException(nameof(i), "");
-
-            if (StartsWithPrefix(args[i]))
+            int prefixIndex = StartsWithPrefix(args[i]);
+            if (prefixIndex >= 0)
             {
-                string[] argValues = args[i].Split('=');
-                string argName = argValues[0];
-                string argValue = string.Empty;
+                string prefix = _prefixes[prefixIndex];
+
+                string argName;
+                string argValue;
+                int eqIndex = args[i].IndexOf('=', prefix.Length); // After prefix
+                if (eqIndex > 0)
+                {
+                    argName = args[i].Substring(0, eqIndex);
+                    argValue = args[i].Substring(eqIndex + 1);
+                }
+                else
+                {
+                    argName = args[i];
+                    argValue = ""; // Proceed to else for next arg
+                }
+
+
+
 
                 bool argumentFound = false;
                 foreach (string argumentName in _arguments.Keys)
@@ -221,18 +239,18 @@ namespace NinjaTraderLauncher
                         argumentFound = true;
                         argument.ArgumentFound = true;
 
-                        if (argValues.Length == 2)
+                        if (!string.IsNullOrEmpty(argValue))
                         {
                             if (!argument.UsesValue)
                             {
                                 _errors.Add(new CommandLineParseError($"CommandLine argument \"{argument.Name}\" has a value, but does not use a value.", argument));
                                 return false;
                             }
-                            argValue = argValues[1];
                         }
                         else
                         {
                             if (!argument.UsesValue) return true;
+
 
                             ++i;
                             if (i >= args.Length)
@@ -249,7 +267,8 @@ namespace NinjaTraderLauncher
                                 return false;
                             }
 
-                            if (StartsWithPrefix(args[i]))
+                            int subIndex = StartsWithPrefix(args[i]);
+                            if (subIndex >= 0)
                             {
                                 if (!argument.ValueRequired)
                                 {
@@ -264,20 +283,8 @@ namespace NinjaTraderLauncher
                             argValue = args[i];
                         }
 
-                        if (string.IsNullOrEmpty(argValue))
-                        {
-                            _errors.Add(new CommandLineParseError($"CommandLine argument \"{argument.Name}\" requires a value.", argument));
-                            return false;
-                        }
-
                         argValue = argValue.TrimStart();
                         argValue = argValue.TrimEnd();
-
-                        if (string.IsNullOrEmpty(argValue))
-                        {
-                            _errors.Add(new CommandLineParseError($"CommandLine argument \"{argument.Name}\" requires a value.", argument));
-                            return false;
-                        }
 
                         if (argValue.StartsWith('"') && argValue.EndsWith('"'))
                         {

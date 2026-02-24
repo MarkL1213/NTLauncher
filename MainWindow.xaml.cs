@@ -11,7 +11,7 @@ namespace NinjaTraderLauncher
 
         public MainWindow()
         {
-            _cleaner = new NinjaTraderCleaner(new LauncherOptions().NinjaTraderDocumentsDirectory);
+            _cleaner = new NinjaTraderCleaner(new NinjaTraderInstallSettings().DocumentsDirectory);
 
             _application = Application.Current as App;
             if (_application == null)
@@ -141,10 +141,19 @@ namespace NinjaTraderLauncher
         private void performCleanup()
         { 
             bool isAllChecked = cleanAllCheckBox.IsChecked == null ? false : ((bool)cleanAllCheckBox.IsChecked);
+
             
+
 
             if (isAllChecked)
             {
+                string youHaveSelected = "WARNING ALL SELECTED DATA WILL BE DELETED\r\n-------------------\r\nYou have selected:";
+                youHaveSelected += "\r\nClean ALL.";
+                MessageBoxResult res = MessageBox.Show(youHaveSelected, "Confirm Cleanup Steps", MessageBoxButton.OKCancel);
+                if (res.Equals(MessageBoxResult.Cancel))
+                    return;
+
+
                 if (!_cleaner.CleanAll())
                 {
                     MessageBox.Show(_cleaner.Error, "Clean Error");
@@ -158,6 +167,18 @@ namespace NinjaTraderLauncher
                 bool isTraceChecked = cleanTraceCheckBox.IsChecked == null ? false : ((bool)cleanTraceCheckBox.IsChecked);
                 bool isDBChecked = cleanDBCheckBox.IsChecked == null ? false : ((bool)cleanDBCheckBox.IsChecked);
                 bool isAnalyzerLogsChecked = cleanAnalyzerLogsCheckBox.IsChecked == null ? false : ((bool)cleanAnalyzerLogsCheckBox.IsChecked);
+
+                string youHaveSelected = "WARING ALL SELECTED DATA WILL BE DELETED\r\n-------------------\r\nYou have selected:";
+                if (isCacheChecked) youHaveSelected += "\r\n    Reflection cache cleanup.";
+                if (isLogChecked) youHaveSelected += "\r\n    Log cleanup.";
+                if (isTraceChecked) youHaveSelected += "\r\n    Trace cleanup.";
+                if (isDBChecked) youHaveSelected += "\r\n    Full price DB cleanup.";
+                if (isAnalyzerLogsChecked) youHaveSelected += "\r\n    Strategy analyzer log cleanup.";
+
+                MessageBoxResult res = MessageBox.Show(youHaveSelected, "Confirm Cleanup Steps", MessageBoxButton.OKCancel);
+                if (res.Equals(MessageBoxResult.Cancel))
+                    return;
+
 
                 if (isCacheChecked && !_cleaner.CleanupCache())
                 {
