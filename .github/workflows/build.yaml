@@ -27,7 +27,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
 
     - name: Publish
-      run: dotnet publish --no-build --configuration Release --output ./publish
+      run: dotnet publish NinjaForge.csproj --no-build --configuration Release --output ./publish
       # If your project has a specific .csproj, add: -p:PublishSingleFile=true --self-contained true for a single EXE (optional, but user-friendly)
 
     - name: Zip the publish folder
