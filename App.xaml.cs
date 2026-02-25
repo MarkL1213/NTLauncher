@@ -2,7 +2,7 @@
 using System.Windows;
 
 
-namespace NinjaTraderLauncher
+namespace NinjaForge
 {
     /// <summary>
     /// Interaction logic for App.xaml

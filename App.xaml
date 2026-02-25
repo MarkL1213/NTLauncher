@@ -1,7 +1,7 @@
-﻿<Application x:Class="NinjaTraderLauncher.App"
+﻿<Application x:Class="NinjaForge.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:NinjaTraderLauncher"
+             xmlns:local="clr-namespace:NinjaForge"
              Startup="AppStartup">
     <Application.Resources>
          

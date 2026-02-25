@@ -1,11 +1,9 @@
 ﻿using Microsoft.Win32;
 using System.IO;
 using System.Windows;
-using System.Windows.Media.Media3D;
-using System.Windows.Shell;
 using System.Xml.Linq;
 
-namespace NinjaTraderLauncher
+namespace NinjaForge
 {
     public class NinjaTraderInstallSettings
     {

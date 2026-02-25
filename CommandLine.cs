@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace NinjaTraderLauncher
+namespace NinjaForge
 {
     public class CommandLineParseError
     {

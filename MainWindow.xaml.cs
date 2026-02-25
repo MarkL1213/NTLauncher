@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace NinjaTraderLauncher
+namespace NinjaForge
 {
     public partial class MainWindow : Window
     {
