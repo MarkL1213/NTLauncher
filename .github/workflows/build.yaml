@@ -45,11 +45,13 @@ jobs:
 
     - name: Upload ZIP to release
       if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2  # v2 is current and maintained
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: NinjaForge-${{ github.event.release.tag_name }}.zip
-        asset_name: NinjaForge-${{ github.event.release.tag_name }}.zip
-        asset_content_type: application/zip
+        files: NinjaForge-${{ github.event.release.tag_name }}.zip
+        # Optional extras if you want them later:
+        # tag_name: ${{ github.ref_name }}     # usually not needed
+        name: Release ${{ github.event.release.tag_name }}
+        body: |
+          Auto-built binaries for NinjaForge ${{ github.event.release.tag_name }}
