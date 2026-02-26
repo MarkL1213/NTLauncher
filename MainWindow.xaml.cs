@@ -56,6 +56,8 @@ namespace NinjaForge
                 LauncherControlGrid.Children.Add(rb);
                 Grid.SetRow(rb, n++);
             }
+
+            OnNinjaTraderExited();//set button state
         }
 
         private void SafeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
@@ -115,22 +117,12 @@ namespace NinjaForge
         private void cleanAllCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             bool isAllChecked = cleanAllCheckBox.IsChecked == null ? false : ((bool)cleanAllCheckBox.IsChecked);
-            if (isAllChecked)
-            {
-                cleanLogCheckBox.IsEnabled = false;
-                cleanTraceCheckBox.IsEnabled = false;
-                cleanCacheCheckBox.IsEnabled = false;
-                cleanDBCheckBox.IsEnabled = false;
-                cleanAnalyzerLogsCheckBox.IsEnabled = false;
-            }
-            else
-            {
-                cleanLogCheckBox.IsEnabled = true;
-                cleanTraceCheckBox.IsEnabled = true;
-                cleanCacheCheckBox.IsEnabled = true;
-                cleanDBCheckBox.IsEnabled = true;
-                cleanAnalyzerLogsCheckBox.IsEnabled = true;
-            }
+
+            cleanLogCheckBox.IsEnabled = !isAllChecked;
+            cleanTraceCheckBox.IsEnabled = !isAllChecked;
+            cleanCacheCheckBox.IsEnabled = !isAllChecked;
+            cleanDBCheckBox.IsEnabled = !isAllChecked;
+            cleanAnalyzerLogsCheckBox.IsEnabled = !isAllChecked;
         }
 
         private void cleanButton_Click(object sender, RoutedEventArgs e)
@@ -141,9 +133,6 @@ namespace NinjaForge
         private void performCleanup()
         { 
             bool isAllChecked = cleanAllCheckBox.IsChecked == null ? false : ((bool)cleanAllCheckBox.IsChecked);
-
-            
-
 
             if (isAllChecked)
             {
@@ -179,7 +168,6 @@ namespace NinjaForge
                 if (res.Equals(MessageBoxResult.Cancel))
                     return;
 
-
                 if (isCacheChecked && !_cleaner.CleanupCache())
                 {
                     MessageBox.Show(_cleaner.Error, "Cache Clean Error");
@@ -205,14 +193,15 @@ namespace NinjaForge
                     MessageBox.Show(_cleaner.Error, "Analyzer Log Clean Error");
                     return;
                 }
-
             }
-
         }
 
         public void OnNinjaTraderExited()
         {
-
+            App app=(Application.Current as App)!;
+            LaunchAndCleanButton.IsEnabled = !app.IsNinjaTraderRunning;
+            LaunchButton.IsEnabled = !app.IsNinjaTraderRunning;
+            cleanButton.IsEnabled = !app.IsNinjaTraderRunning;
         }
     }
 }
