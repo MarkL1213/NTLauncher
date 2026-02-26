@@ -1,18 +1,20 @@
 # NinjaForge
 
 [NinjaForge Github Repo](https://github.com/MarkL1213/NinjaForge)
+
 This project is licensed under the terms of the MIT license.
 
 ## Command Line
 Command line options:
-| Argument name |  required value  | description |
+| Argument Name |  Required Value  | Description |
 |:-------------:|:----------------:|:------------|
 |--launch       | <workspace name> |Launch the specified workspace.|
 |--s            |                  |Use safe mode.|
 |--h            |                  |Display usage help.|
 
 ## Features
-Safe Mode: Launch NinjaTrader using the safe mode option.
+Safe Mode:
+- Launch NinjaTrader using the safe mode option.
 
 Cleanup:
 
