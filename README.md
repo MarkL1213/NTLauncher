@@ -6,11 +6,14 @@ This project is licensed under the terms of the MIT license.
 
 ## Command Line
 Command line options:
+- Options can be prefixed by "/", "-", or "--".
+- All options must be specified separately. Short name bundling is not supported.
+
 | Argument Name | Short Name | Required Value  | Description |
 |:-------------:|:---:|:----------------:|:------------|
-|--launch       | l | *\<workspace name\>* |Launch the specified workspace.|
-|--safe         | s |                 |Use safe mode.|
-|--help         | h |                 |Display usage help.|
+|launch       | l | *\<workspace name\>* |Launch the specified workspace.|
+|safe         | s |                 |Use safe mode.|
+|help         | h |                 |Display usage help.|
 
 ## Features
 Safe Mode:
