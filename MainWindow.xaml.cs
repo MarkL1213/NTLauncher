@@ -209,5 +209,10 @@ namespace NinjaForge
             }
 
         }
+
+        public void OnNinjaTraderExited()
+        {
+
+        }
     }
 }

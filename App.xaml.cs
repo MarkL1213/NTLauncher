@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Windows;
 
 
@@ -9,11 +10,24 @@ namespace NinjaForge
     /// </summary>
     public partial class App : Application
     {
-        WorkspaceFile _workspaceFile = new WorkspaceFile();
+        private WorkspaceFile _workspaceFile = new WorkspaceFile();
+        private MainWindow? _mainWindow = null;
         public WorkspaceFile WorkspaceFile { get { return _workspaceFile; } }
+        public bool SafeMode { get; set; } = false;
+        public bool IsNinjaTraderRunning { get; set; } = false;
 
         void AppStartup(object sender, StartupEventArgs e)
         {
+            Process[] localByName = Process.GetProcessesByName("NinjaTrader");
+            if (localByName.Length > 0)
+            {
+                //NT already running
+                IsNinjaTraderRunning = true;
+                localByName[0].Exited += NinjaTradeAppExited;
+                _workspaceFile = new WorkspaceFile(localByName[0]);
+            }
+
+
             CommandLine commandLine = new CommandLine();
             commandLine.AddPrefixes(new string[] { "/", "-", "--" });
 
@@ -70,20 +84,31 @@ namespace NinjaForge
                 return;
             }
 
-            MainWindow mainWindow = new MainWindow();
-            mainWindow.Show();
+            _mainWindow = new MainWindow();
+            _mainWindow.Show();
         }
 
-        public bool SafeMode { get; set; } = false;
-
+        public void NinjaTradeAppExited(object? sender, EventArgs e)
+        {
+            IsNinjaTraderRunning = false;
+            _workspaceFile.CleanupProcess();
+            if (_mainWindow != null) _mainWindow.OnNinjaTraderExited();
+        }
 
         private bool HandleLaunchArgument(CommandLineArgument launch)
         {
             List<StartupWorkspace> validWorkspaces = _workspaceFile.DetectWorkspaces();
+            if (IsNinjaTraderRunning)
+            {
+                MessageBox.Show($"Unable to launch. NinjaTrader already running.");
+                Shutdown(5);
+                return false;
+            }
+
             if (validWorkspaces.Find(x => x.WorkspaceName == launch.Value) == null)
             {
                 MessageBox.Show($"Unable to launch unknown workspace \"{launch.Value}\"");
-                Shutdown(5);
+                Shutdown(6);
                 return false;
             }
 
@@ -91,14 +116,14 @@ namespace NinjaForge
             if (!string.IsNullOrEmpty(result))
             {
                 MessageBox.Show(result);
-                Shutdown(6);
+                Shutdown(7);
                 return false;
             }
 
             if (!_workspaceFile.LaunchNinjaTrader(SafeMode))
             {
                 MessageBox.Show("Failed to launch NinjaTrader application.");
-                Shutdown(7);
+                Shutdown(8);
                 return false;
             }
 

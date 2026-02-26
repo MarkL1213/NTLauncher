@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Xml.Linq;
@@ -42,36 +43,76 @@ namespace NinjaForge
         public string WorkspaceName { get; set; } = string.Empty;
     }
 
-    public class WorkspaceFile
+    public class WorkspaceFile : IDisposable
     {
-        NinjaTraderInstallSettings _ntInstall = new NinjaTraderInstallSettings();
-        public WorkspaceFile()
+        private NinjaTraderInstallSettings _ntInstall = new NinjaTraderInstallSettings();
+        private Process? _pProcess = null;
+        private string _backupPath = string.Empty;
+        private bool _disposedValue;
+        public string ConfigFileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        
+        public WorkspaceFile(Process? p=null)
         {
+            _pProcess = p;
             ConfigFileName = "_Workspaces.xml";
             FilePath = Path.Combine(_ntInstall.DocumentsDirectory, "workspaces");
         }
 
-        public string ConfigFileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty;
-
         public bool LaunchNinjaTrader(bool safeMode)
         {
+            App app = (Application.Current as App)!;
+
             if (_ntInstall.HasError || !File.Exists(_ntInstall.Executable))
             {
                 MessageBox.Show(_ntInstall.HasError
-                    ? $"Launch error. Valid install not detected. {_ntInstall.Error}"
-                    : $"Launch error. Valid install not detected.",
+                    ? $"Launch error: Valid install not detected. {_ntInstall.Error}"
+                    : $"Launch error: Valid install not detected.",
                     "Launch Error", MessageBoxButton.OK);
 
                 return false;
             }
 
-            using (System.Diagnostics.Process pProcess = new System.Diagnostics.Process())
+            if (_pProcess != null || app.IsNinjaTraderRunning)
             {
-                pProcess.StartInfo.FileName = _ntInstall.Executable;
-                pProcess.StartInfo.UseShellExecute = false;
-                if (safeMode) pProcess.StartInfo.Arguments = "-safe";
-                return pProcess.Start();
+                MessageBox.Show($"Launch error: NinjaTrader is already running.",
+                            "Launch Error", MessageBoxButton.OK);
+                return false;
+            }
+
+            try
+            {
+                _pProcess = new Process();
+                _pProcess.StartInfo.FileName = _ntInstall.Executable;
+                _pProcess.StartInfo.UseShellExecute = false;
+                if (safeMode) _pProcess.StartInfo.Arguments = "-safe";
+                
+                app.IsNinjaTraderRunning = true;
+                _pProcess.Exited += app.NinjaTradeAppExited;
+
+                return _pProcess.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Launch error: NinjaTrader failed startup. {ex.Message}",
+                            "Launch Error", MessageBoxButton.OK);
+
+                app.IsNinjaTraderRunning = false;
+                CleanupProcess();
+
+                return false;
+            }
+        }
+
+        public void CleanupProcess()
+        {
+            if (_pProcess != null)
+            {
+                App app = (Application.Current as App)!;
+
+                _pProcess.Exited -= app.NinjaTradeAppExited;
+                _pProcess.Dispose();
+                _pProcess = null;
             }
         }
 
@@ -108,7 +149,6 @@ namespace NinjaForge
             return string.Empty;
         }
 
-        public string _backupPath = string.Empty;
         internal string CreateBackup()
         {
             string fullPath = Path.Combine(FilePath, ConfigFileName);
@@ -191,17 +231,36 @@ namespace NinjaForge
                 return string.Empty;
             }
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    CleanupProcess();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 
     public class NinjaTraderCleaner
     {
-        public NinjaTraderCleaner(string documentsDirectory) { DocumentsDirectory = documentsDirectory; }
-
-        public enum DataInterval { Tick, Minute, Day, Replay, Cache, All };
-
         public string DocumentsDirectory { set; get; }
 
         public string Error { get; private set; } = string.Empty;
+
+        public enum DataInterval { Tick, Minute, Day, Replay, Cache, All };
+
+        public NinjaTraderCleaner(string documentsDirectory) { DocumentsDirectory = documentsDirectory; }
 
         public bool VerifyDocumentsDirectory()
         {
@@ -338,7 +397,6 @@ namespace NinjaForge
 
             return DeleteAllRecursive(dbDirectory);
         }
-
     }
 
     ///
