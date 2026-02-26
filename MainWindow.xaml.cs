@@ -57,7 +57,7 @@ namespace NinjaForge
                 Grid.SetRow(rb, n++);
             }
 
-            OnNinjaTraderExited();//set button state
+            OnNinjaTraderExited();//set action button states
         }
 
         private void SafeModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
@@ -157,7 +157,7 @@ namespace NinjaForge
                 bool isDBChecked = cleanDBCheckBox.IsChecked == null ? false : ((bool)cleanDBCheckBox.IsChecked);
                 bool isAnalyzerLogsChecked = cleanAnalyzerLogsCheckBox.IsChecked == null ? false : ((bool)cleanAnalyzerLogsCheckBox.IsChecked);
 
-                string youHaveSelected = "WARING ALL SELECTED DATA WILL BE DELETED\r\n-------------------\r\nYou have selected:";
+                string youHaveSelected = "WARNING ALL SELECTED DATA WILL BE DELETED\r\n-------------------\r\nYou have selected:";
                 if (isCacheChecked) youHaveSelected += "\r\n    Reflection cache cleanup.";
                 if (isLogChecked) youHaveSelected += "\r\n    Log cleanup.";
                 if (isTraceChecked) youHaveSelected += "\r\n    Trace cleanup.";
