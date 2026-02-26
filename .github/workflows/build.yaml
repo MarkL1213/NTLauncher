@@ -31,7 +31,6 @@ jobs:
 
     - name: Publish
       run: dotnet publish NinjaForge.csproj --no-build --configuration Release --output ./publish
-      # If your project has a specific .csproj, add: -p:PublishSingleFile=true --self-contained true for a single EXE (optional, but user-friendly)
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
@@ -40,8 +39,12 @@ jobs:
           path: ./publish/**   # uploads all files in folder; GitHub zips them once
           retention-days: 7  # Artifacts expire after 7 days; use releases for permanent
 
-    - name: Create Release and Upload Asset
-      if: github.event_name == 'release'  # Only run this step on releases
+    - name: Create ZIP for release asset
+      if: github.event_name == 'release'
+      run: Compress-Archive -Path ./publish/* -DestinationPath NinjaForge-${{ github.event.release.tag_name }}.zip -Force
+
+    - name: Upload ZIP to release
+      if: github.event_name == 'release'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,7 +52,4 @@ jobs:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: NinjaForge-${{ github.event.release.tag_name }}.zip
         asset_name: NinjaForge-${{ github.event.release.tag_name }}.zip
-
         asset_content_type: application/zip
-
-
