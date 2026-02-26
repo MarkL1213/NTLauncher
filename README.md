@@ -6,11 +6,11 @@ This project is licensed under the terms of the MIT license.
 
 ## Command Line
 Command line options:
-| Argument Name |  Required Value  | Description |
-|:-------------:|:----------------:|:------------|
-|--launch       | \<workspace name\> |Launch the specified workspace.|
-|--s            |                  |Use safe mode.|
-|--h            |                  |Display usage help.|
+| Argument Name | Short Name | Required Value  | Description |
+|:-------------:|:---:|:----------------:|:------------|
+|--launch       | l | *\<workspace name\>* |Launch the specified workspace.|
+|--safe         | s |                 |Use safe mode.|
+|--help         | h |                 |Display usage help.|
 
 ## Features
 Safe Mode:
