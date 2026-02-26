@@ -109,7 +109,7 @@ namespace NinjaForge
             }
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
@@ -202,6 +202,13 @@ namespace NinjaForge
             LaunchAndCleanButton.IsEnabled = !app.IsNinjaTraderRunning;
             LaunchButton.IsEnabled = !app.IsNinjaTraderRunning;
             cleanButton.IsEnabled = !app.IsNinjaTraderRunning;
+        }
+
+        private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            AboutWindow helpWindow = new AboutWindow();
+            helpWindow.ShowDialog();
+
         }
     }
 }

@@ -10,9 +10,20 @@
     <!--  Background="#FFFF4200"  -->
 
     <DockPanel>
-        <Menu x:Name="MainMenu" Margin="0,0,0,0" DockPanel.Dock="Top">
-            <MenuItem Header="E_xit" Click="MenuItem_Click"/>
-        </Menu>
+        <Grid Margin="0,0,0,0" DockPanel.Dock="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Menu x:Name="MainMenu" Grid.Column="0" Background="Transparent">
+                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
+            </Menu>
+
+            <Menu x:Name="HelpMenu" Grid.Column="2" Background="Transparent">
+                <MenuItem Header="About" Click="AboutMenuItem_Click"/>
+            </Menu>            
+        </Grid>
 
         <Border x:Name="OuterBorder" Margin="4,4,4,4" BorderBrush="Black" BorderThickness="1">
             <Grid DockPanel.Dock="Bottom">
