@@ -36,7 +36,7 @@ jobs:
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
-          name: NinjaForge-${{ github.ref_name }}-publish   # or just "publish-output"
+          name: NinjaForge-${{ github.ref_name }}   # or just "publish-output"
           path: ./publish/**   # uploads all files in folder; GitHub zips them once
           retention-days: 7  # Artifacts expire after 7 days; use releases for permanent
 
@@ -51,3 +51,4 @@ jobs:
         asset_name: NinjaForge-${{ github.ref_name }}.zip
 
         asset_content_type: application/zip
+
