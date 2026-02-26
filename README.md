@@ -8,7 +8,7 @@ This project is licensed under the terms of the MIT license.
 Command line options:
 | Argument Name |  Required Value  | Description |
 |:-------------:|:----------------:|:------------|
-|--launch       | <workspace name> |Launch the specified workspace.|
+|--launch       | \<workspace name\> |Launch the specified workspace.|
 |--s            |                  |Use safe mode.|
 |--h            |                  |Display usage help.|
 
