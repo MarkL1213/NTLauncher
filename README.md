@@ -21,7 +21,7 @@ Safe Mode:
 
 Cleanup:
 
-The following folders are cleaned of all files when running the associated clean option.
+The following folders are cleaned of **all files** when running the associated clean option.
 
 - Reflection Cache:
    - <%MyDocuments%>\NinjaTrader 8\cache\
