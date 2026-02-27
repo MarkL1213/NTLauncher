@@ -20,7 +20,6 @@ namespace NinjaForge
     /// </summary>
     public partial class AboutWindow : Window
     {
-        string _version="v420.0.69";//FIXME <-- this version should come from the build system when a new release build is created.
         public AboutWindow()
         {
             InitializeComponent();
