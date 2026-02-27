@@ -26,6 +26,21 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
+    - name: Extract version from tag
+      id: get_version
+      if: github.event_name == 'release'
+      run: |
+        $tag = "${{ github.event.release.tag_name }}"           # e.g. v0.0.5
+        $version = $tag -replace '^v',''          # remove leading 'v' → 0.0.5
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+
+    - name: Update project version
+      if: github.event_name == 'release'
+      run: |
+        $csproj = Get-Content -Path NinjaForge.csproj -Raw
+        $csproj = $csproj -replace '(?<=<Version>)[^<]+(?=</Version>)', '${{ env.VERSION }}'
+        $csproj | Set-Content -Path NinjaForge.csproj
+        
     - name: Build
       run: dotnet build --no-restore --configuration Release
 
@@ -55,3 +70,4 @@ jobs:
         name: Release ${{ github.event.release.tag_name }}
         body: |
           Auto-built binaries for NinjaForge ${{ github.event.release.tag_name }}
+
